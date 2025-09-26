@@ -9,10 +9,26 @@
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
     <script src="https://code.jquery.com/pep/0.4.3/pep.js"></script>
+    <script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script>
 </head>
 
 <body>
     <canvas id="renderCanvas" touch-action="none"></canvas>
+    <div id="controls">
+        <label>
+            <p>Радиус 1</p>
+            <input id="inputRadius1" type="number" placeholder="radius 1" value="2.0">
+        </label>
+        <label>
+            <p>Радиус 2</p>
+            <input id="inputRadius2" type="number" placeholder="radius 2" value="1.5">
+        </label>
+        <label>
+            <p>Дистанция</p>
+            <input id="inputDistance" type="number" placeholder="distance" value="2.75">
+        </label>
+        <button id="dataBtn" type="button">Отправить</button>
+    </div>
     <script src="main.js"></script>
 </body>
 
