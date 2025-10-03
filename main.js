@@ -10,9 +10,9 @@ const inputDistance = document.querySelector("#inputDistance");
 //Глобальные переменные (необходимы для области видимости)
 let scene;
 const TESSELLATION = 128;
-R1 = 2.0; // Радиус первой окружности
-R2 = 1.5; // Радиус второй окружности
-L = 2.75; // Растояние по X между окружностями
+let R1 = 2.0;
+let R2 = 1.5;
+let L = 2.75;
 let line;
 let lineMaterial;
 let normLine;
@@ -33,8 +33,6 @@ let dirX;
 let dirY;
 let perpX;
 let perpY;
-let linePoints;
-let normLinePoints;
 
 
 const createScene = function () {
@@ -48,7 +46,9 @@ const createScene = function () {
     light.intensity = 1;
 
     // объявление переменных
-    
+    R1 = 2.0; // Радиус первой окружности
+    R2 = 1.5; // Радиус второй окружности
+    L = 2.75;
     O1 = new BABYLON.Vector3(0, 0, 0); // Центр первой окружности
     O2 = new BABYLON.Vector3(L, -1, 0);  // Центр второй окружности
 
@@ -72,103 +72,129 @@ const createScene = function () {
     doMath();
 
     //lines
-    linePoints = [O1, A, O2, B, O1, O2]; //Соединяем здесь линии
-    line = BABYLON.MeshBuilder.CreateLines("triangles", { points: linePoints, updatable: true }, scene);
-    
+    const linePoints = [O1, A, O2, B, O1, O2]; //Соединяем здесь линии
+    line = BABYLON.MeshBuilder.CreateLines("triangles", { points: linePoints }, scene);
     lineMaterial = new BABYLON.StandardMaterial("lineMat", scene);
     lineMaterial.diffuseColor = new BABYLON.Color3(1, 1, 1);
 
-    normLinePoints = [A, B];
-    normLine = BABYLON.MeshBuilder.CreateLines("norm", { points: normLinePoints, updatable: true }, scene);
+    const normLinePoints = [A, B];
+    normLine = BABYLON.MeshBuilder.CreateLines("norm", { points: normLinePoints }, scene);
     normLine.diffuseColor = new BABYLON.Color3(1, 1, 1);
 
     return scene;
 };
 
-const updateLines = function () {
-    // Обновляем линии - старую удаляем, создаем новую
-    line.dispose(); // Удаляем старую линию
-    linePoints = [O1, A, O2, B, O1, O2]; // Новый массив точек
-    line = BABYLON.MeshBuilder.CreateLines("triangles", { points: linePoints }, scene);
-    line.diffuseColor = new BABYLON.Color3(1, 1, 1);
+const updateScene = function () {
 
-    normLine.dispose();
-    normLinePoints = [A, B];
-    normLine = BABYLON.MeshBuilder.CreateLines("norm", { points: normLinePoints }, scene);
-    normLine.diffuseColor = new BABYLON.Color3(1, 1, 1);
-}
-
-const getUpdate = function () {
     // Получаем новые значения из полей ввода
-    let oldR1 = R1;
-    let oldR2 = R2
-    let oldL = L;
-
     R1 = parseFloat(document.getElementById("inputRadius1").value) || 0;
     R2 = parseFloat(document.getElementById("inputRadius2").value) || 0;
     L = parseFloat(document.getElementById("inputDistance").value) || 0;
+
+    // Обновляем центр второй окружности
     O2 = new BABYLON.Vector3(L, -1, 0);
 
-    // Animation parameters
-    const frameRate = 30; // frames per second
-    const duration = 1.0; // seconds
-    const totalFrames = frameRate * duration;
+    // 1. Обновляем первый диск (circle1) через scaling
+    // Рассчитываем масштаб относительно исходного радиуса
+    let scale1 = R1 / 2.0; // 2.0 - исходный радиус R1
+    circle1.scaling = new BABYLON.Vector3(scale1, scale1, scale1);
 
-    
-    // Animate circle2 position
-    if(oldL != L){
-        BABYLON.Animation.CreateAndStartAnimation(
-            "circle2Anim",
-            circle2,
-            "position",
-            frameRate,
-            totalFrames,
-            circle2.position.clone(),
-            O2,
-            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
-        );
-    }
+    // 2. Обновляем второй диск (circle2)
+    let scale2 = R2 / 1.5; // 1.5 - исходный радиус R2
+    circle2.scaling = new BABYLON.Vector3(scale2, scale2, scale2);
+    circle2.position = O2; // Обновляем позицию
 
-    // Also animate the scaling if radii are changing
-    if (oldR1 !== R1 || oldR2 !== R2) {
-        const targetScale1 = R1 / 2.0;
-        const targetScale2 = R2 / 1.5;
-        
-        // Animate circle1 scaling
-        BABYLON.Animation.CreateAndStartAnimation(
-            "circle1ScaleAnim",
-            circle1,
-            "scaling",
-            frameRate,
-            totalFrames,
-            circle1.scaling.clone(),
-            new BABYLON.Vector3(targetScale1, targetScale1, targetScale1),
-            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
-        );
+    // 3. Анимация - исправленная версия
+    normLine.dispose();
+    line.dispose(); // Удаляем старую линию
+    const myAnim1 = new BABYLON.Animation(
+        "circleAnimation1",
+        "position.x",
+        60,
+        BABYLON.Animation.ANIMATIONTYPE_FLOAT,
+        BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
+    );
 
-        // Animate circle2 scaling
-        BABYLON.Animation.CreateAndStartAnimation(
-            "circle2ScaleAnim",
-            circle2,
-            "scaling",
-            frameRate,
-            totalFrames,
-            circle2.scaling.clone(),
-            new BABYLON.Vector3(targetScale2, targetScale2, targetScale2),
-            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
-        );
-    }
+    const keyFrames1 = [];
+    keyFrames1.push({
+        frame: 0,
+        value: -L * 3 / 2
+    });
+    keyFrames1.push({
+        frame: 45,
+        value: -L
+    });
+    keyFrames1.push({
+        frame: 90,
+        value: 0
+    });
+    myAnim1.setKeys(keyFrames1);
 
-    // 3. Пересчитываем геометрию пересечения
-    doMath();
+    const myAnim2 = new BABYLON.Animation(
+        "circleAnimation2",
+        "position.x",
+        60,
+        BABYLON.Animation.ANIMATIONTYPE_FLOAT,
+        BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
+    );
 
-    updateLines();
+    const keyFrames2 = [];
+    keyFrames2.push({
+        frame: 0,
+        value: L * 2
+    });
+    keyFrames2.push({
+        frame: 45,
+        value: L * 5 / 3
+    });
+    keyFrames2.push({
+        frame: 90,
+        value: L
+    });
+    myAnim2.setKeys(keyFrames2);
+
+    // Используем AnimationGroup для контроля анимации
+    const animGroup1 = new BABYLON.AnimationGroup("group1");
+    animGroup1.addTargetedAnimation(myAnim1, circle1);
+
+    const animGroup2 = new BABYLON.AnimationGroup("group2");
+    animGroup2.addTargetedAnimation(myAnim2, circle2);
+
+    // Запускаем первую анимацию
+    animGroup1.play();
+    animGroup2.play();
+
+    // Создаем задержку после завершения анимации
+    animGroup1.onAnimationEndObservable.add(() => {
+        console.log("Анимация завершена, начинается задержка");
+
+        setTimeout(() => {
+            console.log("Задержка завершена, можно выполнять следующие действия");
+
+            // 4. Пересчитываем геометрию пересечения
+            doMath();
+
+            // 5. Обновляем линии - старую удаляем, создаем новую
+
+            let newLinePoints = [O1, A, O2, B, O1, O2]; // Новый массив точек
+            line = BABYLON.MeshBuilder.CreateLines("triangles", { points: newLinePoints }, scene);
+            line.diffuseColor = new BABYLON.Color3(1, 1, 1);;
+
+
+            let newNormLinePoints = [A, B];
+            normLine = BABYLON.MeshBuilder.CreateLines("norm", { points: newNormLinePoints }, scene);
+            normLine.diffuseColor = new BABYLON.Color3(1, 1, 1);;
+
+        }, 1000); // Задержка 1 секунды
+    });
+
+
 }
 
 const doMath = function () {
-
-    distance = Math.sqrt(Math.pow((O2.x - O1.x), 2)
-        + Math.pow((O2.y - O1.y), 2) + Math.pow((O2.z - O2.z), 2)
+    //расстояние между центрами 
+    distance = Math.sqrt(Math.pow((circle2.position.x - circle1.position.x), 2)
+        + Math.pow((circle2.position.y - circle1.position.y), 2) + Math.pow((circle2.position.z - circle2.position.z), 2)
     );
     console.log("Расстояние между центрами окружностей: ", distance);
 
@@ -217,7 +243,7 @@ const doMath = function () {
 
 scene = createScene();
 
-dataBtn.addEventListener('click', getUpdate);
+dataBtn.addEventListener('click', updateScene);
 
 //render loop
 engine.runRenderLoop(function () {
