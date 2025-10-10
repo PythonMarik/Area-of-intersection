@@ -22,6 +22,11 @@ let O2;
 let A;
 let B;
 let C;
+let pointO1;
+let pointO2;
+let pointA;
+let pointB;
+let pointC;
 let distance;
 let a;
 let h;
@@ -32,6 +37,10 @@ let dirX;
 let dirY;
 let perpX;
 let perpY;
+
+// Добавляем переменные для хранения меток
+let labelO1, labelO2, labelA, labelB, labelC;
+let ui;
 
 // Функция doMath должна быть объявлена ДО ее использования
 const doMath = function () {
@@ -84,6 +93,39 @@ const doMath = function () {
     console.log("Точка B: ", B);
 }
 
+// Функция для нахождения пересечения двух окружностей
+const calculateIntersectionArea = function (R1, R2, distance) {
+    //нет пересечения
+    if (distance >= R1 + R2) {
+        return 0;
+    }
+
+    // Для удобства перепишем опять уже известные переменные
+    const d1 = a;
+    const d2 = distance - d1;
+
+    // Вычисляем площадь
+    const alpha = 2 * Math.atan(h / d2);
+    const beta = 2 * Math.atan(h / d1);
+
+    // Площади сегментов
+    const S1 = 0.5 * Math.pow(R1, 2) * (beta - Math.sin(beta));
+    const S2 = 0.5 * Math.pow(R2, 2) * (alpha - Math.sin(alpha));
+
+    // Возращаем площадь пересечения
+    return S1 + S2;
+}
+
+// Функция для обновления позиций меток
+const updateLabels = function () {
+    // Просто обновляем связь с мешами - метки должны следовать за точками автоматически
+    if (labelO1) labelO1.linkWithMesh(pointO1);
+    if (labelO2) labelO2.linkWithMesh(pointO2);
+    if (labelA) labelA.linkWithMesh(pointA);
+    if (labelB) labelB.linkWithMesh(pointB);
+    if (labelC) labelC.linkWithMesh(pointC);
+}
+
 const createScene = function () {
     scene = new BABYLON.Scene(engine);
     scene.clearColor = new BABYLON.Color3(0.953, 0.957, 0.965);
@@ -120,6 +162,47 @@ const createScene = function () {
     //Считаем
     doMath();
 
+    //ui для букв
+    ui = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+    ui.renderAtIdealSize = true;
+    ui.idealWidth = 1920;
+    ui.idealHeight = 1080;
+    ui.renderScale = 1.0;
+    ui.idealCamera = camera;
+
+    // Функция для добавления подписей
+    function createLabel(mesh, text) {
+        const label = new BABYLON.GUI.TextBlock();
+        label.text = text;
+        label.color = "white";
+        label.fontSize = 32;
+        label.outlineWidth = 4;
+        label.outlineColor = "black";
+        label.linkWithMesh(mesh);
+        label.linkOffsetY = -30; // чуть выше
+        ui.addControl(label);
+        return label;
+    }
+
+    // Невидимые точки
+    pointO1 = BABYLON.MeshBuilder.CreateSphere("O1_point", { diameter: 0.05 }, scene);
+    pointO1.position = O1;
+    pointO2 = BABYLON.MeshBuilder.CreateSphere("O2_point", { diameter: 0.05 }, scene);
+    pointO2.position = O2;
+    pointA = BABYLON.MeshBuilder.CreateSphere("A_point", { diameter: 0.05 }, scene);
+    pointA.position = A;
+    pointB = BABYLON.MeshBuilder.CreateSphere("B_point", { diameter: 0.05 }, scene);
+    pointB.position = B;
+    pointC = BABYLON.MeshBuilder.CreateSphere("C_point", { diameter: 0.05 }, scene);
+    pointC.position = C;
+
+    // Подписи
+    labelO1 = createLabel(pointO1, "O₁");
+    labelO2 = createLabel(pointO2, "O₂");
+    labelA = createLabel(pointA, "A");
+    labelB = createLabel(pointB, "B");
+    labelC = createLabel(pointC, "C");
+
     //lines
     const linePoints = [O1, A, O2, B, O1, O2]; //Соединяем здесь линии
     line = BABYLON.MeshBuilder.CreateLines("triangles", { points: linePoints }, scene);
@@ -133,26 +216,25 @@ const createScene = function () {
     return scene;
 };
 
-const addText = function(step, text){
+const addText = function (step, text) {
     const tbody = document.querySelector('.output tbody');
     const row = document.createElement('tr');
-    
+
     const stepCell = document.createElement('td');
     stepCell.textContent = step;
-    
+
     const textCell = document.createElement('td');
     textCell.textContent = text;
-    
+
     row.appendChild(stepCell);
     row.appendChild(textCell);
     tbody.appendChild(row);
 }
 
-const clearText = function(){
+const clearText = function () {
     const tbody = document.querySelector('.output tbody');
     tbody.innerHTML = '';
 }
-
 
 const updateScene = function () {
 
@@ -165,20 +247,17 @@ const updateScene = function () {
     O2 = new BABYLON.Vector3(L, -1, 0);
 
     // 1. Обновляем первый диск (circle1) через scaling
-    // Рассчитываем масштаб относительно исходного радиуса
-    let scale1 = R1 / 2.0; // 2.0 - исходный радиус R1
+    let scale1 = R1 / 2.0;
     circle1.scaling = new BABYLON.Vector3(scale1, scale1, scale1);
 
     // 2. Обновляем второй диск (circle2)
-    let scale2 = R2 / 1.5; // 1.5 - исходный радиус R2
+    let scale2 = R2 / 1.5;
     circle2.scaling = new BABYLON.Vector3(scale2, scale2, scale2);
-    circle2.position = O2; // Обновляем позицию
+    circle2.position = O2;
 
-    // 3. Анимация - исправленная версия
-    //ТУТ НАДО ПРОПИСАТЬ УДАЛЕНИЕ НАДПИСЕЙ ПО ТИПУ УДАЛЕНИЯ ЛИНИЙ
-    //->
-    normLine.dispose();
-    line.dispose(); // Удаляем старую линию
+    // Удаляем старые линии
+    if (normLine) normLine.dispose();
+    if (line) line.dispose();
 
     const createAndPlayAnimations = () => {
         const myAnim1 = new BABYLON.Animation(
@@ -289,22 +368,25 @@ const updateScene = function () {
         const animGroup5 = new BABYLON.AnimationGroup("group5");
         animGroup5.addTargetedAnimation(myAnim5empt, circle1);
 
-        // Последовательное выполнение анимаций с задержкой. 2 первые выполняются одновременно
+        // Последовательное выполнение анимаций с задержкой
         animGroup1.play();
         animGroup2.play();
 
         clearText();
 
         animGroup1.onAnimationEndObservable.add(() => {
-
             setTimeout(() => {
-                // Выполняем дейсвия в фигурных скобках, после выполнения кода ниже будет задержка - внизу написано сколько
-
-                // 4. Пересчитываем геометрию пересечения
+                // Пересчитываем геометрию пересечения
                 doMath();
 
-                // 5. Обновляем линии - старую удаляем, создаем новую
-                let newLinePoints = [O1, A, O2, B, O1, O2]; // Новый массив точек
+                // Обновляем позиции точек
+                pointA.position = A;
+                pointB.position = B;
+                pointC.position = C;
+                pointO2.position = O2;
+
+                // Обновляем линии
+                let newLinePoints = [O1, A, O2, B, O1, O2];
                 line = BABYLON.MeshBuilder.CreateLines("triangles", { points: newLinePoints }, scene);
                 line.diffuseColor = new BABYLON.Color3(1, 1, 1);
 
@@ -312,51 +394,64 @@ const updateScene = function () {
                 normLine = BABYLON.MeshBuilder.CreateLines("norm", { points: newNormLinePoints }, scene);
                 normLine.diffuseColor = new BABYLON.Color3(1, 1, 1);
 
+                // Обновляем метки
+                updateLabels();
 
-            }, 3000); // Задержка 3 секунды
+            }, 3000);
         });
 
         animGroup2.onAnimationEndObservable.add(() => {
-
             setTimeout(() => {
-
-                // СЮДА ВСТАВЬТЕ ПОЯВЛЕНИЕ ТЕКСТА С КОММЕНТАРИЯМИ К РАСЧЕТАМ ->
-                addText(1, "YOUR TEXT WILL BE HERE, UNDERSTAND? " + A)
-
+                addText(1, "Расстояние между центрами: " + distance.toFixed(4))
                 animGroup3.play();
-            }, 3000); // Задержка 3 секунды
+            }, 3000);
         });
 
         animGroup3.onAnimationEndObservable.add(() => {
-
             setTimeout(() => {
-
-                // СЮДА ВСТАВЬТЕ ПОЯВЛЕНИЕ ТЕКСТА С КОММЕНТАРИЯМИ К РАСЧЕТАМ ->
-                addText(2, "YOUR TEXT WILL BE HERE, UNDERSTAND? " + A)
-
+                addText(2, "Расстояние O1C: " + a.toFixed(4))
                 animGroup4.play();
-            }, 3000); // Задержка 3 секунды
+            }, 3000);
         });
 
         animGroup4.onAnimationEndObservable.add(() => {
-
             setTimeout(() => {
-
-                // СЮДА ВСТАВЬТЕ ПОЯВЛЕНИЕ ТЕКСТА С КОММЕНТАРИЯМИ К РАСЧЕТАМ ->
-                addText(3, "YOUR TEXT WILL BE HERE, UNDERSTAND? " + A)
-
+                addText(3, "Высота h: " + h.toFixed(4))
                 animGroup5.play();
-            }, 3000); // Задержка 3 секунды
+            }, 3000);
         });
 
         animGroup5.onAnimationEndObservable.add(() => {
-
             setTimeout(() => {
+                addText(4, "Точки пересечения A(" + A.x.toFixed(4) + ", " + A.y.toFixed(4) + ") и B(" + B.x.toFixed(4) + ", " + B.y.toFixed(4) + ")")
+            }, 3000);
+        });
 
-                // СЮДА ВСТАВЬТЕ ПОЯВЛЕНИЕ ТЕКСТА С КОММЕНТАРИЯМИ К РАСЧЕТАМ ->
-                addText(4, "YOUR TEXT WILL BE HERE, UNDERSTAND? " + A)
+        animGroup5.onAnimationEndObservable.add(() => {
+            setTimeout(() => {
+                const d1 = a;
+                const d2 = distance - d1;
+                const intersectionArea = calculateIntersectionArea(R1, R2, distance);
 
-            }, 3000); // Задержка 3 секунды
+                addText(5, `O₁C = ${d1.toFixed(4)}, O₂C = ${d2.toFixed(4)}, h = ${h.toFixed(4)}`);
+
+                setTimeout(() => {
+                    addText(6, `ПЛОЩАДЬ ПЕРЕСЕЧЕНИЯ ОКРУЖНОСТЕЙ = ${intersectionArea.toFixed(4)}`);
+
+                    setTimeout(() => {
+                        // Информация о типе пересечения
+                        if (intersectionArea === 0) {
+                            addText(7, "Окружности не пересекаются");
+                        } else if (intersectionArea === Math.PI * Math.min(R1, R2) * Math.min(R1, R2)) {
+                            addText(7, "Одна окружность полностью внутри другой");
+                        } else {
+                            addText(7, "Окружности пересекаются в двух точках");
+                        }
+                    }, 3000);
+
+                }, 3000);
+
+            }, 3000);
         });
     };
 

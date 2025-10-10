@@ -4,17 +4,13 @@ body {
     height: 100%;
     margin: 0;
     padding: 0;
+    overflow: hidden;
 }
 
 #renderCanvas {
     width: 100%;
-    height: 99.4%;
+    height: 100%;
     touch-action: none;
-}
-
-#controls p{
-    width: 100%;
-    margin: 6px 25% 6px 25%;
 }
 
 #controls {
@@ -22,14 +18,55 @@ body {
     top: 20px;
     left: 20px;
     background: rgba(0, 0, 0, 0.6);
-    padding: 10px;
+    padding: 15px;
     border-radius: 10px;
     color: white;
     display: flex;
+    flex-direction: column;
     gap: 10px;
     align-items: center;
     z-index: 1000;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    max-width: 90vw;
+}
+
+#controls p {
+    width: 100%;
+    margin: 6px 0;
+    text-align: center;
+}
+
+#controls label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+}
+
+#controls input {
+    width: 80%;
+    max-width: 150px;
+    padding: 5px;
+    border: none;
+    border-radius: 5px;
+    text-align: center;
+}
+
+#dataBtn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    background: #4CAF50;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.3s;
+}
+
+#dataBtn:hover {
+    background: #45a049;
 }
 
 .output {
@@ -37,21 +74,37 @@ body {
     top: 20px;
     right: 20px;
     background: rgba(0, 0, 0, 0.6);
-    padding: 10px;
+    padding: 15px;
     border-radius: 10px;
     color: white;
     display: flex;
+    flex-direction: column;
     gap: 10px;
     align-items: center;
     z-index: 1000;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    max-width: 90vw;
 }
 
-.output caption{
+.output caption {
     margin: 4px;
+    font-weight: bold;
+    font-size: 1.1em;
 }
 
+.output table {
+    width: 100%;
+    border-collapse: collapse;
+}
 
-.output{
-    width: 25rem;
+.output th,
+.output td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.output th {
+    background: rgba(255, 255, 255, 0.1);
 }
