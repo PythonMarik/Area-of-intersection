@@ -12,6 +12,10 @@ body {
     touch-action: none;
 }
 
+#controls p{
+    width: 100%;
+    margin: 6px 25% 6px 25%;
+}
 
 #controls {
     position: absolute;
@@ -28,6 +32,26 @@ body {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
-#controls p{
-    margin: 8px;
+.output {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 10px;
+    border-radius: 10px;
+    color: white;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    z-index: 1000;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.output caption{
+    margin: 4px;
+}
+
+
+.output{
+    width: 25rem;
 }
