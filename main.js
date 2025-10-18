@@ -38,6 +38,8 @@ let dirY;
 let perpX;
 let perpY;
 
+const THE_WORLD = 500; // Константа для Timeout
+
 // Добавляем переменные для хранения меток
 let labelO1, labelO2, labelA, labelB, labelC;
 let ui;
@@ -216,18 +218,45 @@ const createScene = function () {
     return scene;
 };
 
-const addText = function (step, text) {
+let step = 1;
+
+const addTextInTable = function (text) {
     const tbody = document.querySelector('.output tbody');
     const row = document.createElement('tr');
 
     const stepCell = document.createElement('td');
     stepCell.textContent = step;
+    step++;
 
     const textCell = document.createElement('td');
     textCell.textContent = text;
 
     row.appendChild(stepCell);
     row.appendChild(textCell);
+    tbody.appendChild(row);
+}
+
+const addImgInTable = function (imageUrl) {
+    const tbody = document.querySelector('.output tbody');
+    const row = document.createElement('tr');
+
+    const stepCell = document.createElement('td');
+    stepCell.textContent = step;
+    step++;
+
+    const imgCell = document.createElement('td');
+    const img = document.createElement('img'); // Создаем элемент img
+    img.src = imageUrl; // Устанавливаем ссылку на картинку
+    img.alt = 'Image'; // Добавляем альтернативный текст
+
+    // Опционально: можно добавить стили для ограничения размера
+    img.style.maxWidth = '200px';
+    img.style.maxHeight = '200px';
+
+    imgCell.appendChild(img); // Добавляем изображение в ячейку
+
+    row.appendChild(stepCell);
+    row.appendChild(imgCell);
     tbody.appendChild(row);
 }
 
@@ -397,34 +426,41 @@ const updateScene = function () {
                 // Обновляем метки
                 updateLabels();
 
-            }, 3000);
+            }, THE_WORLD);
         });
 
         animGroup2.onAnimationEndObservable.add(() => {
             setTimeout(() => {
-                addText(1, "Расстояние между центрами: " + distance.toFixed(4))
+                addTextInTable("Расстояние между центрами: " + distance.toFixed(4))
                 animGroup3.play();
-            }, 3000);
+            }, THE_WORLD);
         });
 
         animGroup3.onAnimationEndObservable.add(() => {
             setTimeout(() => {
-                addText(2, "Расстояние O1C: " + a.toFixed(4))
+                addTextInTable("Расстояние O1C: " + a.toFixed(4))
                 animGroup4.play();
-            }, 3000);
+            }, THE_WORLD);
         });
 
         animGroup4.onAnimationEndObservable.add(() => {
             setTimeout(() => {
-                addText(3, "Высота h: " + h.toFixed(4))
+                addTextInTable("Высота h: " + h.toFixed(4))
                 animGroup5.play();
-            }, 3000);
+            }, THE_WORLD);
         });
 
         animGroup5.onAnimationEndObservable.add(() => {
             setTimeout(() => {
-                addText(4, "Точки пересечения A(" + A.x.toFixed(4) + ", " + A.y.toFixed(4) + ") и B(" + B.x.toFixed(4) + ", " + B.y.toFixed(4) + ")")
-            }, 3000);
+                addTextInTable("Точки пересечения A(" + A.x.toFixed(4) + ", " + A.y.toFixed(4) + ") и B(" + B.x.toFixed(4) + ", " + B.y.toFixed(4) + ")")
+            }, THE_WORLD);
+        });
+
+        //TEST
+        animGroup5.onAnimationEndObservable.add(() => {
+            setTimeout(() => {
+                addImgInTable("1.png")
+            }, THE_WORLD);
         });
 
         animGroup5.onAnimationEndObservable.add(() => {
@@ -433,26 +469,28 @@ const updateScene = function () {
                 const d2 = distance - d1;
                 const intersectionArea = calculateIntersectionArea(R1, R2, distance);
 
-                addText(5, `O₁C = ${d1.toFixed(4)}, O₂C = ${d2.toFixed(4)}, h = ${h.toFixed(4)}`);
+                addTextInTable(`O₁C = ${d1.toFixed(4)}, O₂C = ${d2.toFixed(4)}, h = ${h.toFixed(4)}`);
 
                 setTimeout(() => {
-                    addText(6, `ПЛОЩАДЬ ПЕРЕСЕЧЕНИЯ ОКРУЖНОСТЕЙ = ${intersectionArea.toFixed(4)}`);
+                    addTextInTable(`ПЛОЩАДЬ ПЕРЕСЕЧЕНИЯ ОКРУЖНОСТЕЙ = ${intersectionArea.toFixed(4)}`);
 
                     setTimeout(() => {
                         // Информация о типе пересечения
                         if (intersectionArea === 0) {
-                            addText(7, "Окружности не пересекаются");
+                            addTextInTable("Окружности не пересекаются");
                         } else if (intersectionArea === Math.PI * Math.min(R1, R2) * Math.min(R1, R2)) {
-                            addText(7, "Одна окружность полностью внутри другой");
+                            addTextInTable("Одна окружность полностью внутри другой");
                         } else {
-                            addText(7, "Окружности пересекаются в двух точках");
+                            addTextInTable("Окружности пересекаются в двух точках");
                         }
-                    }, 3000);
+                    }, THE_WORLD);
 
-                }, 3000);
+                }, THE_WORLD);
 
-            }, 3000);
+            }, THE_WORLD);
         });
+
+        step = 1;
     };
 
     createAndPlayAnimations();
