@@ -6,7 +6,7 @@ const inputRadius1 = document.querySelector("#inputRadius1");
 const inputRadius2 = document.querySelector("#inputRadius2");
 const inputDistance = document.querySelector("#inputDistance");
 
-//Глобальные переменные (необходимы для области видимости)
+//Глобальные переменные
 let scene;
 const TESSELLATION = 128;
 let R1 = 2.0;
@@ -30,26 +30,141 @@ let pointC;
 let distance;
 let a;
 let h;
-let dx;
-let dy;
-let length;
-let dirX;
-let dirY;
-let perpX;
-let perpY;
 
-const THE_WORLD = 500; // Константа для Timeout
+const THE_WORLD = 2500;
 
 // Добавляем переменные для хранения меток
 let labelO1, labelO2, labelA, labelB, labelC;
 let ui;
 
+let step = 1;
+
+// CSS для формул
+const addFormulaStyles = function () {
+    if (document.getElementById('formula-styles')) return;
+    
+    const style = document.createElement('style');
+    style.id = 'formula-styles';
+    style.textContent = `
+        .formula-container {
+            padding: 12px !important;
+            background: #f8f9fa !important;
+            border-radius: 8px !important;
+            border-left: 4px solid #007bff !important;
+            margin: 5px 0 !important;
+        }
+        .formula {
+            font-size: 16px !important;
+            text-align: center !important;
+            margin: 8px 0 !important;
+            padding: 12px !important;
+            background: white !important;
+            border-radius: 6px !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+            font-family: "Courier New", monospace !important;
+            font-weight: bold !important;
+            color: #2c3e50 !important;
+            border: 1px solid #e9ecef !important;
+        }
+        .formula-description {
+            font-size: 14px !important;
+            color: #6c757d !important;
+            font-style: italic !important;
+            margin-top: 8px !important;
+            text-align: center !important;
+            padding: 0 10px !important;
+        }
+        .formula-cell {
+            padding: 8px !important;
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+// Функция для добавления математической формулы в таблицу
+const addFormulaInTable = function (formula, description = "") {
+    const tbody = document.querySelector('.output tbody');
+    const row = document.createElement('tr');
+
+    const stepCell = document.createElement('td');
+    stepCell.textContent = step;
+    step++;
+
+    const formulaCell = document.createElement('td');
+    
+    const container = document.createElement('div');
+    container.className = 'formula-container';
+    
+    const formulaDiv = document.createElement('div');
+    formulaDiv.className = 'formula';
+    formulaDiv.textContent = formula;
+    
+    container.appendChild(formulaDiv);
+    
+    if (description) {
+        const descDiv = document.createElement('div');
+        descDiv.className = 'formula-description';
+        descDiv.textContent = description;
+        container.appendChild(descDiv);
+    }
+    
+    formulaCell.appendChild(container);
+    row.appendChild(stepCell);
+    row.appendChild(formulaCell);
+    tbody.appendChild(row);
+};
+
+const addTextInTable = function (text) {
+    const tbody = document.querySelector('.output tbody');
+    const row = document.createElement('tr');
+
+    const stepCell = document.createElement('td');
+    stepCell.textContent = step;
+    step++;
+
+    const textCell = document.createElement('td');
+    textCell.textContent = text;
+
+    row.appendChild(stepCell);
+    row.appendChild(textCell);
+    tbody.appendChild(row);
+};
+
+const addImgInTable = function (imageUrl) {
+    const tbody = document.querySelector('.output tbody');
+    const row = document.createElement('tr');
+
+    const stepCell = document.createElement('td');
+    stepCell.textContent = step;
+    stepCell.style.padding = '12px';
+    step++;
+
+    const imgCell = document.createElement('td');
+    imgCell.style.padding = '12px';
+    const img = document.createElement('img');
+    img.src = imageUrl;
+    img.alt = 'Image';
+    img.style.maxWidth = '200px';
+    img.style.maxHeight = '200px';
+
+    imgCell.appendChild(img);
+    row.appendChild(stepCell);
+    row.appendChild(imgCell);
+    tbody.appendChild(row);
+}
+
+const clearText = function () {
+    const tbody = document.querySelector('.output tbody');
+    tbody.innerHTML = '';
+    step = 1;
+}
+
 // Функция doMath должна быть объявлена ДО ее использования
 const doMath = function () {
-    //расстояние между центрами 
-    distance = Math.sqrt(Math.pow((circle2.position.x - circle1.position.x), 2)
-        + Math.pow((circle2.position.y - circle1.position.y), 2) + Math.pow((circle2.position.z - circle2.position.z), 2)
-    );
+    // Исправляем расчет расстояния
+    const dx = O2.x - O1.x;
+    const dy = O2.y - O1.y;
+    distance = Math.sqrt(dx * dx + dy * dy);
     console.log("Расстояние между центрами окружностей: ", distance);
 
     //O1C = d1
@@ -69,15 +184,13 @@ const doMath = function () {
     console.log("Точка C (основание): ", C);
 
     //Находим единичный вектор направления O1O2
-    dx = O2.x - O1.x;
-    dy = O2.y - O1.y;
-    length = Math.sqrt(dx * dx + dy * dy);
-    dirX = dx / length;
-    dirY = dy / length;
+    const length = Math.sqrt(dx * dx + dy * dy);
+    const dirX = dx / length;
+    const dirY = dy / length;
 
     //Перпендикулярный вектор (поворот на 90 градусов)
-    perpX = -dirY;
-    perpY = dirX;
+    const perpX = -dirY;
+    const perpY = dirX;
 
     //Точки пересечения A и B
     A = new BABYLON.Vector3(
@@ -120,7 +233,6 @@ const calculateIntersectionArea = function (R1, R2, distance) {
 
 // Функция для обновления позиций меток
 const updateLabels = function () {
-    // Просто обновляем связь с мешами - метки должны следовать за точками автоматически
     if (labelO1) labelO1.linkWithMesh(pointO1);
     if (labelO2) labelO2.linkWithMesh(pointO2);
     if (labelA) labelA.linkWithMesh(pointA);
@@ -139,11 +251,11 @@ const createScene = function () {
     light.intensity = 1;
 
     // объявление переменных
-    R1 = 2.0; // Радиус первой окружности
-    R2 = 1.5; // Радиус второй окружности
+    R1 = 2.0;
+    R2 = 1.5;
     L = 2.75;
-    O1 = new BABYLON.Vector3(0, 0, 0); // Центр первой окружности
-    O2 = new BABYLON.Vector3(L, -1, 0);  // Центр второй окружности
+    O1 = new BABYLON.Vector3(0, 0, 0);
+    O2 = new BABYLON.Vector3(L, -1, 0);
 
     //circle1
     circle1 = BABYLON.MeshBuilder.CreateDisc("circle1", { radius: R1, tessellation: TESSELLATION }, scene);
@@ -181,7 +293,7 @@ const createScene = function () {
         label.outlineWidth = 4;
         label.outlineColor = "black";
         label.linkWithMesh(mesh);
-        label.linkOffsetY = -30; // чуть выше
+        label.linkOffsetY = -30;
         ui.addControl(label);
         return label;
     }
@@ -218,59 +330,11 @@ const createScene = function () {
     return scene;
 };
 
-let step = 1;
-
-const addTextInTable = function (text) {
-    const tbody = document.querySelector('.output tbody');
-    const row = document.createElement('tr');
-
-    const stepCell = document.createElement('td');
-    stepCell.textContent = step;
-    step++;
-
-    const textCell = document.createElement('td');
-    textCell.textContent = text;
-
-    row.appendChild(stepCell);
-    row.appendChild(textCell);
-    tbody.appendChild(row);
-}
-
-const addImgInTable = function (imageUrl) {
-    const tbody = document.querySelector('.output tbody');
-    const row = document.createElement('tr');
-
-    const stepCell = document.createElement('td');
-    stepCell.textContent = step;
-    step++;
-
-    const imgCell = document.createElement('td');
-    const img = document.createElement('img'); // Создаем элемент img
-    img.src = imageUrl; // Устанавливаем ссылку на картинку
-    img.alt = 'Image'; // Добавляем альтернативный текст
-
-    // Опционально: можно добавить стили для ограничения размера
-    img.style.maxWidth = '200px';
-    img.style.maxHeight = '200px';
-
-    imgCell.appendChild(img); // Добавляем изображение в ячейку
-
-    row.appendChild(stepCell);
-    row.appendChild(imgCell);
-    tbody.appendChild(row);
-}
-
-const clearText = function () {
-    const tbody = document.querySelector('.output tbody');
-    tbody.innerHTML = '';
-}
-
 const updateScene = function () {
-
     // Получаем новые значения из полей ввода
-    R1 = parseFloat(document.getElementById("inputRadius1").value) || 0;
-    R2 = parseFloat(document.getElementById("inputRadius2").value) || 0;
-    L = parseFloat(document.getElementById("inputDistance").value) || 0;
+    R1 = parseFloat(document.getElementById("inputRadius1").value) || 2.0;
+    R2 = parseFloat(document.getElementById("inputRadius2").value) || 1.5;
+    L = parseFloat(document.getElementById("inputDistance").value) || 2.75;
 
     // Обновляем центр второй окружности
     O2 = new BABYLON.Vector3(L, -1, 0);
@@ -348,7 +412,6 @@ const updateScene = function () {
             frame: 0,
             value: circle1.position.x
         });
-
         myAnim3empt.setKeys(keyFrames3);
 
         const myAnim4empt = new BABYLON.Animation(
@@ -431,35 +494,40 @@ const updateScene = function () {
 
         animGroup2.onAnimationEndObservable.add(() => {
             setTimeout(() => {
-                addTextInTable("Расстояние между центрами: " + distance.toFixed(4))
+                addFormulaInTable(
+                    "d = √[(x₂ - x₁)² + (y₂ - y₁)²]",
+                    "Расстояние между центрами окружностей"
+                );
+                addTextInTable(`Расстояние между центрами: ${distance.toFixed(4)}`);
                 animGroup3.play();
             }, THE_WORLD);
         });
 
         animGroup3.onAnimationEndObservable.add(() => {
             setTimeout(() => {
-                addTextInTable("Расстояние O1C: " + a.toFixed(4))
+                addFormulaInTable(
+                    "a = (R₁² - R₂² + d²) / 2d",
+                    "Расстояние от O₁ до линии пересечения (точки C)"
+                );
+                addTextInTable("Расстояние O1C: " + a.toFixed(4));
                 animGroup4.play();
             }, THE_WORLD);
         });
 
         animGroup4.onAnimationEndObservable.add(() => {
             setTimeout(() => {
-                addTextInTable("Высота h: " + h.toFixed(4))
+                addFormulaInTable(
+                    "h = √(R₁² - a²)",
+                    "Высота от линии центров до точек пересечения"
+                );
+                addTextInTable("Высота h: " + h.toFixed(4));
                 animGroup5.play();
             }, THE_WORLD);
         });
 
         animGroup5.onAnimationEndObservable.add(() => {
             setTimeout(() => {
-                addTextInTable("Точки пересечения A(" + A.x.toFixed(4) + ", " + A.y.toFixed(4) + ") и B(" + B.x.toFixed(4) + ", " + B.y.toFixed(4) + ")")
-            }, THE_WORLD);
-        });
-
-        //TEST
-        animGroup5.onAnimationEndObservable.add(() => {
-            setTimeout(() => {
-                addImgInTable("1.png")
+                addTextInTable("Точки пересечения A(" + A.x.toFixed(4) + ", " + A.y.toFixed(4) + ") и B(" + B.x.toFixed(4) + ", " + B.y.toFixed(4) + ")");
             }, THE_WORLD);
         });
 
@@ -468,12 +536,22 @@ const updateScene = function () {
                 const d1 = a;
                 const d2 = distance - d1;
                 const intersectionArea = calculateIntersectionArea(R1, R2, distance);
-
+        
                 addTextInTable(`O₁C = ${d1.toFixed(4)}, O₂C = ${d2.toFixed(4)}, h = ${h.toFixed(4)}`);
-
+                
+                addFormulaInTable(
+                    "α = 2 × arctan(h / O₂C), β = 2 × arctan(h / O₁C)",
+                    "Углы сегментов окружностей"
+                );
+                addTextInTable(`β = ${(2 * Math.atan(h / d1)).toFixed(4)} рад, α = ${(2 * Math.atan(h / d2)).toFixed(4)} рад`);
+        
                 setTimeout(() => {
-                    addTextInTable(`ПЛОЩАДЬ ПЕРЕСЕЧЕНИЯ ОКРУЖНОСТЕЙ = ${intersectionArea.toFixed(4)}`);
-
+                    addFormulaInTable(
+                        "S = 0.5R₁²(β - sinβ) + 0.5R₂²(α - sinα)",
+                        "Площадь пересечения как сумма площадей сегментов"
+                    );
+                    addTextInTable(`Площадь пересечения окружностей = ${intersectionArea.toFixed(4)}`);
+        
                     setTimeout(() => {
                         // Информация о типе пересечения
                         if (intersectionArea === 0) {
@@ -484,18 +562,17 @@ const updateScene = function () {
                             addTextInTable("Окружности пересекаются в двух точках");
                         }
                     }, THE_WORLD);
-
+        
                 }, THE_WORLD);
-
+        
             }, THE_WORLD);
         });
-
-        step = 1;
     };
 
     createAndPlayAnimations();
 }
 
+addFormulaStyles(); // Добавляем стили при загрузке
 scene = createScene();
 
 dataBtn.addEventListener('click', updateScene);

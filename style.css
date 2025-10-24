@@ -70,6 +70,9 @@ body {
 }
 
 .output {
+    max-width: 90vw;
+    max-height: 400px;
+    overflow-y: auto;
     position: absolute;
     top: 20px;
     right: 20px;
@@ -84,7 +87,6 @@ body {
     z-index: 1000;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(10px);
-    max-width: 90vw;
 }
 
 .output caption {
@@ -108,3 +110,4 @@ body {
 .output th {
     background: rgba(255, 255, 255, 0.1);
 }
+
