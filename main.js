@@ -32,6 +32,7 @@ let a;
 let h;
 
 const THE_WORLD = 2500;
+const EPS = 0.00001;
 
 // Добавляем переменные для хранения меток
 let labelO1, labelO2, labelA, labelB, labelC;
@@ -42,7 +43,7 @@ let step = 1;
 // CSS для формул
 const addFormulaStyles = function () {
     if (document.getElementById('formula-styles')) return;
-    
+
     const style = document.createElement('style');
     style.id = 'formula-styles';
     style.textContent = `
@@ -91,23 +92,23 @@ const addFormulaInTable = function (formula, description = "") {
     step++;
 
     const formulaCell = document.createElement('td');
-    
+
     const container = document.createElement('div');
     container.className = 'formula-container';
-    
+
     const formulaDiv = document.createElement('div');
     formulaDiv.className = 'formula';
     formulaDiv.textContent = formula;
-    
+
     container.appendChild(formulaDiv);
-    
+
     if (description) {
         const descDiv = document.createElement('div');
         descDiv.className = 'formula-description';
         descDiv.textContent = description;
         container.appendChild(descDiv);
     }
-    
+
     formulaCell.appendChild(container);
     row.appendChild(stepCell);
     row.appendChild(formulaCell);
@@ -167,15 +168,15 @@ const doMath = function () {
     distance = Math.sqrt(dx * dx + dy * dy);
     console.log("Расстояние между центрами окружностей: ", distance);
 
-    //O1C = d1
+    // O1C = d1
     a = (Math.pow(R1, 2) - Math.pow(R2, 2) + Math.pow(distance, 2)) / (2 * distance);
     console.log("Расстояние от O1 до линии пересечения: ", a);
 
-    //AC = h
+    // AC = h
     h = Math.sqrt(Math.pow(R1, 2) - Math.pow(a, 2));
     console.log("Высота h: ", h);
 
-    //Находим точку C (основание перпендикуляра)
+    // Находим точку C (основание перпендикуляра)
     C = new BABYLON.Vector3(
         O1.x + (a / distance) * (O2.x - O1.x),
         O1.y + (a / distance) * (O2.y - O1.y),
@@ -183,16 +184,16 @@ const doMath = function () {
     );
     console.log("Точка C (основание): ", C);
 
-    //Находим единичный вектор направления O1O2
+    // Находим единичный вектор направления O1O2
     const length = Math.sqrt(dx * dx + dy * dy);
     const dirX = dx / length;
     const dirY = dy / length;
 
-    //Перпендикулярный вектор (поворот на 90 градусов)
+    // Перпендикулярный вектор (поворот на 90 градусов)
     const perpX = -dirY;
     const perpY = dirX;
 
-    //Точки пересечения A и B
+    // Точки пересечения A и B
     A = new BABYLON.Vector3(
         C.x + h * perpX,
         C.y + h * perpY,
@@ -210,7 +211,17 @@ const doMath = function () {
 
 // Функция для нахождения пересечения двух окружностей
 const calculateIntersectionArea = function (R1, R2, distance) {
-    //нет пересечения
+
+    // Просто отладочно проверить площади самих окружностей
+    console.log("Площадь окружности O1: ", Math.PI * R1 * R1);
+    console.log("Площадь окружности O2: ", Math.PI * R2 * R2);
+
+    // Нет пересечения
+    if (distance >= R1 + R2) {
+        return 0;
+    }
+
+    // Одна окружность полностью внутри другой
     if (distance >= R1 + R2) {
         return 0;
     }
@@ -219,13 +230,38 @@ const calculateIntersectionArea = function (R1, R2, distance) {
     const d1 = a;
     const d2 = distance - d1;
 
-    // Вычисляем площадь
-    const alpha = 2 * Math.atan(h / d2);
-    const beta = 2 * Math.atan(h / d1);
+    // Случай когда центр O2 совпадает с точкой C
+    let alpha, beta;
 
-    // Площади сегментов
+    if (Math.abs(d2) < EPS) {
+        alpha = Math.PI;
+    }
+    else {
+        alpha = 2 * Math.atan(h / Math.abs(d2));
+
+        // Если d2 отрицательное (O2 между O1 и C), прибавляем 2*Pi
+        if (d2 < 0) {
+            alpha += 2 * Math.PI;
+        }
+    }
+
+    // Случай когда центр O1 совпадает с точкой C
+    if (Math.abs(d1) < EPS) {
+        beta = Math.PI;
+    }
+    else {
+        beta = 2 * Math.atan(h / Math.abs(d1));
+
+        if (d1 < 0) {
+            beta += 2 * Math.PI;
+        }
+    }
+
+    // Вычисляем площадь
     const S1 = 0.5 * Math.pow(R1, 2) * (beta - Math.sin(beta));
+    console.log("Площадь сегмента S1: ", S1);
     const S2 = 0.5 * Math.pow(R2, 2) * (alpha - Math.sin(alpha));
+    console.log("Площадь сегмента S2: ", S2);
 
     // Возращаем площадь пересечения
     return S1 + S2;
@@ -536,22 +572,22 @@ const updateScene = function () {
                 const d1 = a;
                 const d2 = distance - d1;
                 const intersectionArea = calculateIntersectionArea(R1, R2, distance);
-        
+
                 addTextInTable(`O₁C = ${d1.toFixed(4)}, O₂C = ${d2.toFixed(4)}, h = ${h.toFixed(4)}`);
-                
+
                 addFormulaInTable(
                     "α = 2 × arctan(h / O₂C), β = 2 × arctan(h / O₁C)",
                     "Углы сегментов окружностей"
                 );
                 addTextInTable(`β = ${(2 * Math.atan(h / d1)).toFixed(4)} рад, α = ${(2 * Math.atan(h / d2)).toFixed(4)} рад`);
-        
+
                 setTimeout(() => {
                     addFormulaInTable(
                         "S = 0.5R₁²(β - sinβ) + 0.5R₂²(α - sinα)",
                         "Площадь пересечения как сумма площадей сегментов"
                     );
                     addTextInTable(`Площадь пересечения окружностей = ${intersectionArea.toFixed(4)}`);
-        
+
                     setTimeout(() => {
                         // Информация о типе пересечения
                         if (intersectionArea === 0) {
@@ -562,9 +598,9 @@ const updateScene = function () {
                             addTextInTable("Окружности пересекаются в двух точках");
                         }
                     }, THE_WORLD);
-        
+
                 }, THE_WORLD);
-        
+
             }, THE_WORLD);
         });
     };
