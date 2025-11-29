@@ -291,7 +291,7 @@ const createScene = function () {
     R2 = 1.5;
     L = 2.75;
     O1 = new BABYLON.Vector3(0, 0, 0);
-    O2 = new BABYLON.Vector3(L, -1, 0);
+    O2 = new BABYLON.Vector3(L, 0, 0);
 
     //circle1
     circle1 = BABYLON.MeshBuilder.CreateDisc("circle1", { radius: R1, tessellation: TESSELLATION }, scene);
@@ -373,7 +373,7 @@ const updateScene = function () {
     L = parseFloat(document.getElementById("inputDistance").value) || 2.75;
 
     // Обновляем центр второй окружности
-    O2 = new BABYLON.Vector3(L, -1, 0);
+    O2 = new BABYLON.Vector3(L, 0, 0);
 
     // 1. Обновляем первый диск (circle1) через scaling
     let scale1 = R1 / 2.0;
