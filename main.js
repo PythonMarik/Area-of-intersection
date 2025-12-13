@@ -222,8 +222,8 @@ const calculateIntersectionArea = function (R1, R2, distance) {
     }
 
     // Одна окружность полностью внутри другой
-    if (distance >= R1 + R2) {
-        return 0;
+    if (distance <= Math.abs(R1 - R2)) {
+        return Math.PI * Math.min(R1, R2) * Math.min(R1, R2);
     }
 
     // Для удобства перепишем опять уже известные переменные
