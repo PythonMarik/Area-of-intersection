@@ -30,6 +30,7 @@ let pointC;
 let distance;
 let a;
 let h;
+let camera;
 
 const THE_WORLD = 2500;
 const EPS = 0.00001;
@@ -280,9 +281,16 @@ const createScene = function () {
     scene = new BABYLON.Scene(engine);
     scene.clearColor = new BABYLON.Color3(0.953, 0.957, 0.965);
 
-    const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 15, new BABYLON.Vector3(0, 0, 0));
+    camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 15, new BABYLON.Vector3(0, 0, 0));
     camera.attachControl(canvas, true);
-
+    camera.panningSensibility = 0;
+    camera.wheelPrecision = 10;
+    camera.lowerAlphaLimit = camera.alpha;
+    camera.upperAlphaLimit = camera.alpha;
+    camera.lowerBetaLimit = camera.beta;
+    camera.upperBetaLimit = camera.beta;
+    camera.lowerRadiusLimit = 3;
+    
     const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(1, 1, 0));
     light.intensity = 1;
 
@@ -305,12 +313,14 @@ const createScene = function () {
     circle2 = BABYLON.MeshBuilder.CreateDisc("circle2", { radius: R2, tessellation: TESSELLATION }, scene);
     circle2.position = O2;
     const material2 = new BABYLON.StandardMaterial("mat2", scene);
-    material2.diffuseColor = new BABYLON.Color3(0.09, 0.51, 0.212);
+    material2.diffuseColor = new BABYLON.Color3(0.09, 0.212, 0.51);
     material2.alpha = 0.8;
     circle2.material = material2;
 
     //Считаем
     doMath();
+
+    camera.setTarget(C);
 
     //ui для букв
     ui = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
@@ -506,6 +516,8 @@ const updateScene = function () {
             setTimeout(() => {
                 // Пересчитываем геометрию пересечения
                 doMath();
+
+                camera.setTarget(C);
 
                 // Обновляем позиции точек
                 pointA.position = A;
